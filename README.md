@@ -1,52 +1,66 @@
-# AlphaDev Sorting Algorithm
+# AlphaDev
 
-## Overview
+## Introduction
 
-AlphaDev is an artificial intelligence (AI) system that uses reinforcement learning to discover enhanced computer science algorithms. AlphaDev was trained to uncover new algorithms by transforming sorting into a single-player ‘assembly game’. This repository provides the implementation of the sorting algorithms discovered by AlphaDev in the C++ language.
+AlphaDev is an AI model based on the AlphaZero/MuZero Reinforcement Learning architecture. It's designed to optimize assembly code using a set of assembly instructions and a cost function which takes into account both correctness and performance.
 
 ## Architecture
 
-This repository contains the following main components:
-1. `alpha_sort.hpp`: C++ header file containing the AlphaDev sorting algorithm
-2. `alpha_sort.cpp`: C++ source file containing the AlphaDev sorting algorithm
-3. `alpha_sort_test.cpp`: C++ test file to test the correctness and performance of the AlphaDev sorting algorithm
-4. `CMakeLists.txt`: File for building the project using CMake.
+AlphaDev consists of:
 
-## Getting Started
+1. Representation Network: `f_rep` that outputs a latent representation `ht` of the state `St`.
 
-1. Clone this repository: `git clone https://github.com/<your-username>/AlphaDev-Sorting-Algorithm.git`
-2. Navigate to the project directory: `cd AlphaDev-Sorting-Algorithm`
-3. Build the project: `mkdir build && cd build && cmake .. && make`
-4. Run the tests: `./AlphaDev_Sort_Test`
+2. Prediction Network: `f_pred` that predicts the expected return (the value) `vˆt` and a policy `πˆt` from a given latent state.
 
-## Roadmap
+3. Dynamics Network: `f_dyn` that predicts the next latent state `htk+1` and reward `rˆtk+1` resulting from a transition.
 
-### Stage 1: Reverse-Engineering AlphaDev Algorithms
-Reverse-engineer the discovered algorithms and translate them into C++. 
+## How AlphaDev Works
 
-### Stage 2: Implementing and Testing
-Implement and test the algorithms in a high-level language such as C++. 
+On reaching a new state, AlphaDev encodes the state into a latent representation using the representation network. The dynamics and prediction networks are used to simulate several trajectories that fill out a search tree by sampling state transitions.
 
-### Stage 3: Performance Evaluation
-Carry out performance evaluation and optimization to ensure efficiency in different scenarios.
+The actions are selected using a strategy that balances exploration (trying new actions) and exploitation (progressing further down the subtree of the current best action).
 
-### Stage 4: Open-Sourcing
-Make the implemented algorithms available in an open-source library for usage by developers worldwide.
+Finally, the predicted policy is trained to match the visit counts of the MCTS policy in an attempt to distil the search procedure into a policy that will disregard nodes that are not promising.
 
-### Stage 5: Expansion to Other Algorithms
-After sorting, the approach will be expanded to improve other fundamental algorithms like hashing.
+## Potential Use Cases
+
+AlphaDev, due to its general architecture, could potentially be adapted to solve a wide variety of optimization problems. Here are a few examples:
+
+1. **Route Optimization**: For logistics companies, optimizing the routes of their fleet can result in significant cost savings. AlphaDev could be used to learn the optimal routes based on a variety of factors such as traffic, distance, and number of stops.
+
+2. **Job Scheduling**: In computing, job scheduling is a key issue. AlphaDev could be used to learn the optimal schedule that maximizes the usage of computational resources and minimizes job completion time.
+
+3. **Stock Portfolio Optimization**: AlphaDev could be used to learn the optimal mix of stocks to maximize return and minimize risk, given the current market conditions.
+
+4. **Game Playing**: Similar to its ancestor AlphaZero, AlphaDev could potentially be used to master a wide variety of games, by learning the optimal strategies.
+
+5. **Drug Discovery**: AlphaDev could be used to find the optimal chemical structure for a new drug that maximizes efficacy and minimizes side effects.
+
+## Prerequisites
+
+- Tensor Processing Unit (TPU) v.3 or higher
+- TPU v.4 for the actor side
+
+## Training
+
+Train AlphaDev using a batch size of 1,024 per TPU core, with up to 16 TPU cores, for 1 million iterations.
+
+## Usage
+
+The AlphaDev model can be used to optimize assembly code or other optimization problems by implementing the model and specifying the proper cost function and action space.
+
+## Future Work
+
+Future adaptations of AlphaDev could implement different learning algorithms or optimization techniques for specific domains or problem areas.
 
 ## Contributing
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## License
-This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for more information. 
 
-## Citation
-If you find this work useful for your research, please cite the original [paper](https://nature.com/...).
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-## Contact
-For any questions or discussions, please open an issue on GitHub or contact the team directly. 
+## Acknowledgments
 
-## Acknowledgement
-This work was based on research conducted by the AlphaDev team. Their pioneering work on reinforcement learning and its applications in computer science algorithms was the foundation of this project.
+We appreciate the efforts of the researchers and developers who contributed to the development of the AlphaZero/MuZero architectures on which AlphaDev is based.
