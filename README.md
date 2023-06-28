@@ -36,18 +36,16 @@ AlphaDev, due to its general architecture, could potentially be adapted to solve
 
 5. **Drug Discovery**: AlphaDev could be used to find the optimal chemical structure for a new drug that maximizes efficacy and minimizes side effects.
 
-## Prerequisites
-
-- Tensor Processing Unit (TPU) v.3 or higher
-- TPU v.4 for the actor side
-
-## Training
-
-Train AlphaDev using a batch size of 1,024 per TPU core, with up to 16 TPU cores, for 1 million iterations.
 
 ## Usage
 
-The AlphaDev model can be used to optimize assembly code or other optimization problems by implementing the model and specifying the proper cost function and action space.
+* AssemblyGame This represents the Assembly Game RL environment. The state of the RL environment contains the current program and the state of memory and registers. Doing a step in this environment is equivalent to adding a new assembly instruction to the program (see the step method). The reward is a combination of correctness and latency reward after executing the assembly program over an input distribution. For simplicity of the overall algorithm we are not including the assembly runner, but assembly execution can be delegated to an external library (e.g. AsmJit).
+
+* AlphaDevConfig contains the main hyperparameters used for the AlphaDev agent. This includes configuration of AlphaZero, MCTS, and underlying networks.
+
+* play_game contains the logic to run an AlphaDev game. This include the MCTS procedure and the storage of the game.
+
+* RepresentationNet and PredictionNet contain the implementation the networks used in the AlphaZero algorithm. It uses a MultiQuery Transformer to represent assembly instruction
 
 ## Future Work
 
@@ -64,3 +62,13 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 We appreciate the efforts of the researchers and developers who contributed to the development of the AlphaZero/MuZero architectures on which AlphaDev is based.
+
+## Roadmap
+
+* Add jax-based multi query attention: `MultiQueryAttentionBlock`
+
+* add `ResBlockV2`
+
+* add utils, terminal, is_correct, legal_actions
+
+* 
