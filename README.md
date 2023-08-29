@@ -1,8 +1,11 @@
+[![Multi-Modality](agorabanner.png)](https://discord.gg/qUtxnK2NMf)
+
+
 # AlphaDev
-
-## Introduction
-
 AlphaDev is an AI model based on the AlphaZero/MuZero Reinforcement Learning architecture. It's designed to optimize assembly code using a set of assembly instructions and a cost function which takes into account both correctness and performance.
+
+## Usage
+`pip install alphadev`
 
 ## Architecture
 

@@ -434,18 +434,6 @@ class RepresentationNet(hk.Module):
 ######## 2.3 Prediction Network ########
 
 
-def make_head_network(
-    embedding_dim: int,
-    output_size: int,
-    num_hidden_layers: int = 2,
-    name: Optional[str] = None,
-) -> Callable[[jnp.ndarray,], jnp.ndarray]:
-  return hk.Sequential(
-      [ResBlockV2(embedding_dim) for _ in range(num_hidden_layers)]
-      + [hk.Linear(output_size)],
-      name=name,
-  )
-
 
 class DistributionSupport(object):
 
