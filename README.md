@@ -70,5 +70,3 @@ We appreciate the efforts of the researchers and developers who contributed to t
 * add `ResBlockV2`
 
 * add utils, terminal, is_correct, legal_actions
-
-* 
