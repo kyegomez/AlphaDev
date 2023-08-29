@@ -1,31 +1,3 @@
-# Copyright 2023 DeepMind Technologies Limited
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
-"""Pseudocode description of the AlphaDev algorithm."""
-
-###########################
-########## Content ########
-# 1. Environment
-# 2. Networks
-#   2.1 Network helpers
-#   2.2 Representation network
-#   2.3 Prediction network (correctness and latency values and policy)
-# 3. Helpers
-# 4. Part 1: Self-Play
-# 5. Part 2: Training
-###########################
 
 import collections
 import functools
@@ -133,15 +105,6 @@ class AssemblyGame(object):
     pass
 
 
-######## End Environment ########
-#################################
-
-#####################################
-############ 2. Networks ############
-
-######## 2.1 Network helpers ########
-
-
 class Action(object):
   """Action representation."""
 
@@ -226,46 +189,6 @@ class UniformNetwork(object):
 ######## 2.2 Representation Network ########
 
 
-class MultiQueryAttentionBlock:
-  """Attention with multiple query heads and a single shared key and value head.
-
-  Implementation of "Fast Transformer Decoding: One Write-Head is All You Need",
-  see https://arxiv.org/abs/1911.02150.
-  """
-
-
-class ResBlockV2:
-  """Layer-normed variant of the block from https://arxiv.org/abs/1603.05027."""
-
-
-def int2bin(integers_array: jnp.array) -> jnp.array:
-  """Converts an array of integers to an array of its 32bit representation bits.
-
-  Conversion goes from array of shape (S1, S2, ..., SN) to (S1, S2, ..., SN*32),
-  i.e. all binary arrays are concatenated. Also note that the single 32-long
-  binary sequences are reversed, i.e. the number 1 will be converted to the
-  binary 1000000... . This is irrelevant for ML problems.
-
-  Args:
-    integers_array: array of integers to convert.
-
-  Returns:
-    array of bits (on or off) in boolean type.
-  """
-  flat_arr = integers_array.astype(jnp.int32).reshape(-1, 1)
-  bin_mask = jnp.tile(2 ** jnp.arange(32), (flat_arr.shape[0], 1))
-  return ((flat_arr & bin_mask) != 0).reshape(
-      *integers_array.shape[:-1], integers_array.shape[-1] * 32
-  )
-
-
-def bin2int(binary_array: jnp.array) -> jnp.array:
-  """Reverses operation of int2bin."""
-  u_binary_array = binary_array.reshape(
-      *binary_array.shape[:-1], binary_array.shape[-1] // 32, 32
-  )
-  exp = jnp.tile(2 ** jnp.arange(32), u_binary_array.shape[:-1] + (1,))
-  return jnp.sum(exp * u_binary_array, axis=-1)
 
 
 class RepresentationNet(hk.Module):
@@ -592,89 +515,6 @@ class PredictionNet(hk.Module):
         latency_value_logits=latency_value['logits'],
         policy=policy_head(embedding),
     )
-
-
-####### End Networks ########
-#############################
-
-#############################
-####### 3. Helpers ##########
-
-MAXIMUM_FLOAT_VALUE = float('inf')
-
-KnownBounds = collections.namedtuple('KnownBounds', ['min', 'max'])
-
-
-class AlphaDevConfig(object):
-  """AlphaDev configuration."""
-
-  def __init__(
-      self,
-  ):
-    ### Self-Play
-    self.num_actors = 128  # TPU actors
-    # pylint: disable-next=g-long-lambda
-    self.visit_softmax_temperature_fn = lambda steps: (
-        1.0 if steps < 500e3 else 0.5 if steps < 750e3 else 0.25
-    )
-    self.max_moves = jnp.inf
-    self.num_simulations = 800
-    self.discount = 1.0
-
-    # Root prior exploration noise.
-    self.root_dirichlet_alpha = 0.03
-    self.root_exploration_fraction = 0.25
-
-    # UCB formula
-    self.pb_c_base = 19652
-    self.pb_c_init = 1.25
-
-    self.known_bounds = KnownBounds(-6.0, 6.0)
-
-    # Environment: spec of the Variable Sort 3 task
-    self.task_spec = TaskSpec(
-        max_program_size=100,
-        num_inputs=17,
-        num_funcs=14,
-        num_locations=19,
-        num_actions=271,
-        correct_reward=1.0,
-        correctness_reward_weight=2.0,
-        latency_reward_weight=0.5,
-        latency_quantile=0,
-    )
-
-    ### Network architecture
-    self.hparams = ml_collections.ConfigDict()
-    self.hparams.embedding_dim = 512
-    self.hparams.representation = ml_collections.ConfigDict()
-    self.hparams.representation.use_program = True
-    self.hparams.representation.use_locations = True
-    self.hparams.representation.use_locations_binary = False
-    self.hparams.representation.use_permutation_embedding = False
-    self.hparams.representation.repr_net_res_blocks = 8
-    self.hparams.representation.attention = ml_collections.ConfigDict()
-    self.hparams.representation.attention.head_depth = 128
-    self.hparams.representation.attention.num_heads = 4
-    self.hparams.representation.attention.attention_dropout = False
-    self.hparams.representation.attention.position_encoding = 'absolute'
-    self.hparams.representation.attention_num_layers = 6
-    self.hparams.value = ml_collections.ConfigDict()
-    self.hparams.value.max = 3.0  # These two parameters are task / reward-
-    self.hparams.value.num_bins = 301  # dependent and need to be adjusted.
-
-    ### Training
-    self.training_steps = int(1000e3)
-    self.checkpoint_interval = 500
-    self.target_network_interval = 100
-    self.window_size = int(1e6)
-    self.batch_size = 512
-    self.td_steps = 5
-    self.lr_init = 2e-4
-    self.momentum = 0.9
-
-  def new_game(self):
-    return Game(self.task_spec.num_actions, self.discount, self.task_spec)
 
 
 class MinMaxStats(object):
@@ -1132,14 +972,6 @@ def _add_exploration_noise(config: AlphaDevConfig, node: Node):
   for a, n in zip(actions, noise):
     node.children[a].prior = node.children[a].prior * (1 - frac) + n * frac
 
-
-########### End Self-Play ###########
-#####################################
-
-#####################################
-####### 5. Part 2: Training #########
-
-
 def train_network(
     config: AlphaDevConfig, storage: SharedStorage, replay_buffer: ReplayBuffer
 ):
@@ -1160,88 +992,3 @@ def train_network(
   storage.save_network(config.training_steps, network)
 
 
-def scale_gradient(tensor: Any, scale):
-  """Scales the gradient for the backward pass."""
-  return tensor * scale + jax.lax.stop_gradient(tensor) * (1 - scale)
-
-
-def _loss_fn(
-    network_params: jnp.array,
-    target_network_params: jnp.array,
-    network: Network,
-    target_network: Network,
-    batch: Sequence[Sample]
-) -> float:
-  """Computes loss."""
-  loss = 0
-  for observation, bootstrap_obs, target in batch:
-    predictions = network.inference(network_params, observation)
-    bootstrap_predictions = target_network.inference(
-        target_network_params, bootstrap_obs)
-    target_correctness, target_latency, target_policy, bootstrap_discount = (
-        target
-    )
-    target_correctness += (
-        bootstrap_discount * bootstrap_predictions.correctness_value_logits
-    )
-
-    l = optax.softmax_cross_entropy(predictions.policy_logits, target_policy)
-    l += scalar_loss(
-        predictions.correctness_value_logits, target_correctness, network
-    )
-    l += scalar_loss(predictions.latency_value_logits, target_latency, network)
-    loss += l
-  loss /= len(batch)
-  return loss
-
-
-_loss_grad = jax.grad(_loss_fn, argnums=0)
-
-
-def _update_weights(
-    optimizer: optax.GradientTransformation,
-    optimizer_state: Any,
-    network: Network,
-    target_network: Network,
-    batch: Sequence[Sample],
-) -> Any:
-  """Updates the weight of the network."""
-  updates = _loss_grad(
-      network.get_params(),
-      target_network.get_params(),
-      network,
-      target_network,
-      batch)
-
-  optim_updates, new_optim_state = optimizer.update(updates, optimizer_state)
-  network.update_params(optim_updates)
-  return new_optim_state
-
-
-def scalar_loss(prediction, target, network) -> float:
-  support = network.prediction.support
-  return optax.softmax_cross_entropy(
-      prediction, support.scalar_to_two_hot(target)
-  )
-
-
-######### End Training ###########
-##################################
-
-################################################################################
-############################# End of pseudocode ################################
-################################################################################
-
-
-# Stubs to make the typechecker happy.
-# pylint: disable-next=unused-argument
-def softmax_sample(distribution, temperature: float):
-  return 0, 0
-
-
-def launch_job(f, *args):
-  f(*args)
-
-
-def make_uniform_network():
-  return UniformNetwork()
