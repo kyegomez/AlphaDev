@@ -4,9 +4,20 @@
 # AlphaDev
 AlphaDev is an AI model based on the AlphaZero/MuZero Reinforcement Learning architecture. It's designed to optimize assembly code using a set of assembly instructions and a cost function which takes into account both correctness and performance.
 
-## Usage
+## Install
 `pip install alphadev`
 
+## Usage
+```python
+import torch
+from alpha_dev.model import AlphaDev
+
+model =  AlphaDev().cuda()
+
+x = torch.randint(0, 256, (1, 1024)).cuda()
+
+model(x) # (1, 1024, 20000)
+```
 ## Architecture
 
 AlphaDev consists of:
